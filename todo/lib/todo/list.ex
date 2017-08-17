@@ -1,4 +1,4 @@
-defmodule TodoList.CsvImporter do
+defmodule Todo.List.CsvImporter do
   defp read_lines(file) do
     file
     |> File.stream!
@@ -11,7 +11,7 @@ defmodule TodoList.CsvImporter do
       [date, title] = String.split(x, ",")
     end)
     |> Enum.map(fn(line) -> convert(line) end)
-    TodoList.new(entry)
+    Todo.List.new(entry)
   end
 
   defp convert([date, title]) do
@@ -35,31 +35,29 @@ defmodule Processing do
   end
 end
 
-defmodule TodoList do
+defmodule Todo.List do
   defstruct auto_id: 1, entries: %{}
-
-  def new, do: %TodoList{}
 
   def new(entries \\ []) do
     Enum.reduce(
       entries,
-      %TodoList{},
+      %Todo.List{},
       fn(entry, todo_list_acc) ->
         add_entry(todo_list_acc, entry)
       end
     )
   end
 
-  def add_entry(%TodoList{auto_id: auto_id, entries: entries} = todo_list, entry) do
+  def add_entry(%Todo.List{auto_id: auto_id, entries: entries} = todo_list, entry) do
     entry = Map.put(entry, :id, auto_id)
     new_entries = Map.put_new(entries, auto_id, entry)
-    %TodoList{todo_list | 
+    %Todo.List{todo_list | 
       entries: new_entries,
       auto_id: auto_id + 1
     }
   end
 
-  def entries(%TodoList{entries: entries}, date) do
+  def entries(%Todo.List{entries: entries}, date) do
     entries
     |> Stream.filter(fn({_, entry}) ->
       entry.date == date
@@ -69,17 +67,17 @@ defmodule TodoList do
     end)
   end
 
-  def update_entry(%TodoList{entries: entries} = todo_list, entry_id, updater_fun) do
+  def update_entry(%Todo.List{entries: entries} = todo_list, entry_id, updater_fun) do
     case entries[entry_id] do
       nil -> todo_list
       old_entry ->
         new_entry = updater_fun.(old_entry)
         new_entries = Map.put(entries, new_entry.id, new_entry)
-        %TodoList{todo_list | entries: new_entries}
+        %Todo.List{todo_list | entries: new_entries}
     end
   end
 
-  def delete_entry(%TodoList{entries: entries} = todo_list, entry_id) do
+  def delete_entry(%Todo.List{entries: entries} = todo_list, entry_id) do
     todo_list = Map.delete(entries, entry_id)
   end
 end
